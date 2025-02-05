@@ -27,8 +27,8 @@
 
 - [📖 Overview](#-overview)
 - [🚀 Quickstart](#-quickstart)
-  - [Python](#-python)
-  - [Node.js](#-nodejs)
+  - [Node.js](#nodejs)
+  - [Python](#python)
 - [🗂 Repository Structure](#-repository-structure)
 - [🤝 Contributing](#-contributing)
 - [📜 Documentation](#-documentation)
@@ -106,7 +106,7 @@ Your wallet has been successfully funded with testnet ETH. You can view the tran
 git clone https://github.com/coinbase/agentkit.git
 
 # Navigate to the chatbot-python example
-cd agentkit/python/cdp-langchain/examples/chatbot-python
+cd agentkit/python/examples/cdp-langchain-chatbot 
 
 # At this point, fill in your CDP API key name, private key, and OpenAI API key in the
 # .env.example file.
