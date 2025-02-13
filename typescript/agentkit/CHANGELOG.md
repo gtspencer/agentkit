@@ -21,6 +21,13 @@
 
 ### Added
 
+- Added `svmWalletProvider` abstract class for interacting with Solana.
+- Added `solanaKeypairWalletProvider` to concretely implement `svmWalletProvider` with a local keypair.
+
+## [0.1.2] - 2025-02-07
+
+### Added
+
 - Added `alchemyTokenPricesActionProvider` to fetch token prices from Alchemy.
 - Added `token_prices_by_symbol` action to fetch token prices by symbol.
 - Added `token_prices_by_address` action to fetch token prices by network and address pairs.
