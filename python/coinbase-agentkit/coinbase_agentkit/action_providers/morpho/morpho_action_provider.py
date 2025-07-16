@@ -7,6 +7,7 @@ from web3 import Web3
 
 from coinbase_agentkit.action_providers.action_decorator import create_action
 from coinbase_agentkit.action_providers.action_provider import ActionProvider
+from coinbase_agentkit.action_providers.erc20.constants import ERC20_ABI
 from coinbase_agentkit.action_providers.morpho.constants import METAMORPHO_ABI
 from coinbase_agentkit.action_providers.morpho.schemas import (
     MorphoDepositSchema,
@@ -43,11 +44,11 @@ Important notes:
 - Please use a token address (example 0x4200000000000000000000000000000000000006) for the token_address field. If you are unsure of the token address, please clarify what the requested token address is before continuing.""",
         schema=MorphoDepositSchema,
     )
-    def deposit(self, wallet: EvmWalletProvider, args: dict[str, Any]) -> str:
+    def deposit(self, wallet_provider: EvmWalletProvider, args: dict[str, Any]) -> str:
         """Deposit assets into a Morpho Vault.
 
         Args:
-            wallet (EvmWalletProvider): The wallet provider instance.
+            wallet_provider (EvmWalletProvider): The wallet provider instance.
             args (dict[str, Any]): Input arguments for the action.
 
         Returns:
@@ -60,10 +61,19 @@ Important notes:
             return "Error: Assets amount must be greater than 0"
 
         try:
-            atomic_assets = Web3.to_wei(assets, "ether")
+            decimals = wallet_provider.read_contract(
+                contract_address=args["token_address"],
+                abi=ERC20_ABI,
+                function_name="decimals",
+                args=[],
+            )
+
+            atomic_assets = int(assets * (10**decimals))
 
             try:
-                approve(wallet, args["token_address"], args["vault_address"], atomic_assets)
+                approve(
+                    wallet_provider, args["token_address"], args["vault_address"], atomic_assets
+                )
             except Exception as e:
                 return f"Error approving Morpho Vault as spender: {e!s}"
 
@@ -78,8 +88,8 @@ Important notes:
                 "data": encoded_data,
             }
 
-            tx_hash = wallet.send_transaction(params)
-            wallet.wait_for_transaction_receipt(tx_hash)
+            tx_hash = wallet_provider.send_transaction(params)
+            wallet_provider.wait_for_transaction_receipt(tx_hash)
 
             return f"Deposited {args['assets']} to Morpho Vault {args['vault_address']} with transaction hash: {tx_hash}"
 
@@ -96,11 +106,11 @@ This tool allows withdrawing assets from a Morpho Vault. It takes:
 """,
         schema=MorphoWithdrawSchema,
     )
-    def withdraw(self, wallet: EvmWalletProvider, args: dict[str, Any]) -> str:
+    def withdraw(self, wallet_provider: EvmWalletProvider, args: dict[str, Any]) -> str:
         """Withdraw assets from a Morpho Vault.
 
         Args:
-            wallet (EvmWalletProvider): The wallet provider instance.
+            wallet_provider (EvmWalletProvider): The wallet provider instance.
             args (dict[str, Any]): Input arguments for the action.
 
         Returns:
@@ -125,8 +135,8 @@ This tool allows withdrawing assets from a Morpho Vault. It takes:
                 "data": encoded_data,
             }
 
-            tx_hash = wallet.send_transaction(params)
-            wallet.wait_for_transaction_receipt(tx_hash)
+            tx_hash = wallet_provider.send_transaction(params)
+            wallet_provider.wait_for_transaction_receipt(tx_hash)
 
             return f"Withdrawn {args['assets']} from Morpho Vault {args['vault_address']} with transaction hash: {tx_hash}"
 

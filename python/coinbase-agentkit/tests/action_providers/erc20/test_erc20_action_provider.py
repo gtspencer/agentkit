@@ -1,5 +1,7 @@
 """Tests for the ERC20 action provider."""
 
+from unittest.mock import call
+
 import pytest
 from web3 import Web3
 
@@ -13,6 +15,7 @@ from coinbase_agentkit.network import Network
 from .conftest import (
     MOCK_AMOUNT,
     MOCK_CONTRACT_ADDRESS,
+    MOCK_DECIMALS,
     MOCK_DESTINATION,
 )
 
@@ -37,13 +40,26 @@ def test_get_balance_success(mock_wallet):
 
     response = provider.get_balance(mock_wallet, args)
 
-    mock_wallet.read_contract.assert_called_once_with(
-        contract_address=MOCK_CONTRACT_ADDRESS,
-        abi=ERC20_ABI,
-        function_name="balanceOf",
-        args=[mock_wallet.get_address()],
+    mock_wallet.read_contract.assert_has_calls(
+        [
+            call(
+                contract_address=MOCK_CONTRACT_ADDRESS,
+                abi=ERC20_ABI,
+                function_name="balanceOf",
+                args=[mock_wallet.get_address()],
+            ),
+            call(
+                contract_address=MOCK_CONTRACT_ADDRESS,
+                abi=ERC20_ABI,
+                function_name="decimals",
+                args=[],
+            ),
+        ]
     )
-    assert f"Balance of {MOCK_CONTRACT_ADDRESS} is {MOCK_AMOUNT}" in response
+    assert (
+        f"Balance of {MOCK_CONTRACT_ADDRESS} is {int(MOCK_AMOUNT) / 10 ** MOCK_DECIMALS}"
+        in response
+    )
 
 
 def test_get_balance_error(mock_wallet):
@@ -145,5 +161,5 @@ def test_supports_network():
 
     provider = erc20_action_provider()
     for protocol_family, expected in test_cases:
-        network = Network(chain_id=1, protocol_family=protocol_family)
+        network = Network(chain_id="1", protocol_family=protocol_family)
         assert provider.supports_network(network) is expected

@@ -1,8 +1,18 @@
 // TODO: Improve type safety
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { toAccount } from "viem/accounts";
 import { WalletProvider } from "./walletProvider";
-import { TransactionRequest, ReadContractParameters, ReadContractReturnType } from "viem";
+import {
+  TransactionRequest,
+  ReadContractParameters,
+  ReadContractReturnType,
+  ContractFunctionName,
+  Abi,
+  ContractFunctionArgs,
+  Address,
+  Account,
+} from "viem";
 
 /**
  * EvmWalletProvider is the abstract base class for all EVM wallet providers.
@@ -10,6 +20,26 @@ import { TransactionRequest, ReadContractParameters, ReadContractReturnType } fr
  * @abstract
  */
 export abstract class EvmWalletProvider extends WalletProvider {
+  /**
+   * Convert the wallet provider to a Signer.
+   *
+   * @returns The signer.
+   */
+  toSigner(): Account {
+    return toAccount({
+      address: this.getAddress() as Address,
+      signMessage: async ({ message }) => {
+        return this.signMessage(message as string | Uint8Array);
+      },
+      signTransaction: async transaction => {
+        return this.signTransaction(transaction as TransactionRequest);
+      },
+      signTypedData: async typedData => {
+        return this.signTypedData(typedData);
+      },
+    });
+  }
+
   /**
    * Sign a message.
    *
@@ -56,5 +86,11 @@ export abstract class EvmWalletProvider extends WalletProvider {
    * @param params - The parameters to read the contract.
    * @returns The response from the contract.
    */
-  abstract readContract(params: ReadContractParameters): Promise<ReadContractReturnType>;
+  abstract readContract<
+    const abi extends Abi | readonly unknown[],
+    functionName extends ContractFunctionName<abi, "pure" | "view">,
+    const args extends ContractFunctionArgs<abi, "pure" | "view", functionName>,
+  >(
+    params: ReadContractParameters<abi, functionName, args>,
+  ): Promise<ReadContractReturnType<abi, functionName, args>>;
 }
